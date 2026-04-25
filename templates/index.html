@@ -23,7 +23,7 @@
 {% else %}
 <p style="color:red;">Monitoring is OFF</p>
 {% endif %}
-<h2>Network Traffic Data</h2>
+
 
 <h2>Filter Traffic</h2>
 
@@ -48,6 +48,30 @@
 <button type="reset">Clear</button>
 
 </form>
+
+<h2>Network Statistics</h2>
+
+<table border="1">
+
+<tr>
+    <th>Total Packets</th>
+    <th>TCP Packets</th>
+    <th>UDP Packets</th>
+    <th>ICMP Packets</th>
+    <th>Average Packet Size</th>
+</tr>
+
+<tr>
+    <td>{{ stats.total }}</td>
+    <td>{{ stats.tcp }}</td>
+    <td>{{ stats.udp }}</td>
+    <td>{{ stats.icmp }}</td>
+    <td>{{ stats.avg_size }}</td>
+</tr>
+
+</table>
+
+<h2>Network Traffic Data</h2>
 <table border="1">
 
 <tr>

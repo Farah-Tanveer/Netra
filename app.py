@@ -21,6 +21,15 @@ def home():
 
     data = []
 
+    # Default statistics
+    stats = {
+        "total": 0,
+        "tcp": 0,
+        "udp": 0,
+        "icmp": 0,
+        "avg_size": 0
+    }
+
     if monitoring:
         df = pd.read_csv("network_traffic.csv")
 
@@ -46,12 +55,25 @@ def home():
         if dest_ip:
             df = df[df["Destination_IP"] == dest_ip]
 
+        # Generate Statistics
+        stats["total"] = len(df)
+
+        stats["tcp"] = len(df[df["Protocol"] == "TCP"])
+
+        stats["udp"] = len(df[df["Protocol"] == "UDP"])
+
+        stats["icmp"] = len(df[df["Protocol"] == "ICMP"])
+
+        if len(df) > 0:
+            stats["avg_size"] = round(df["Packet_Size"].mean(), 2)
+
         data = df.to_dict(orient="records")
 
     return render_template(
         "index.html",
         data=data,
-        monitoring=monitoring
+        monitoring=monitoring,
+        stats=stats
     )
 
 
