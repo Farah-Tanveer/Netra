@@ -1,7 +1,10 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 import pandas as pd
 
 app = Flask(__name__)
+
+# Monitoring State
+monitoring = False
 
 # Port → Service Mapping
 port_service_map = {
@@ -15,21 +18,44 @@ port_service_map = {
 
 @app.route('/')
 def home():
-    # Read CSV file
-    df = pd.read_csv("network_traffic.csv")
+    global monitoring
 
-    # Add Service column
-    services = []
-    for port in df["Destination_Port"]:
-        service = port_service_map.get(port, "Unknown")
-        services.append(service)
+    if monitoring:
+        df = pd.read_csv("network_traffic.csv")
 
-    df["Service"] = services
+        # Service Mapping
+        services = []
+        for port in df["Destination_Port"]:
+            service = port_service_map.get(port, "Unknown")
+            services.append(service)
 
-    # Convert dataframe to list
-    data = df.to_dict(orient="records")
+        df["Service"] = services
 
-    return render_template("index.html", data=data)
+        data = df.to_dict(orient="records")
+
+    else:
+        data = []
+
+    return render_template(
+        "index.html",
+        data=data,
+        monitoring=monitoring
+    )
+
+
+@app.route('/start', methods=['POST'])
+def start_monitoring():
+    global monitoring
+    monitoring = True
+    return redirect('/')
+
+
+@app.route('/stop', methods=['POST'])
+def stop_monitoring():
+    global monitoring
+    monitoring = False
+    return redirect('/')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

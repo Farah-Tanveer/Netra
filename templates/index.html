@@ -10,9 +10,19 @@
 
 <h1>Network Traffic Monitoring System</h1>
 
-<button>Start Monitoring</button>
-<button>Stop Monitoring</button>
+<form method="POST" action="/start">
+    <button type="submit">Start Monitoring</button>
+</form>
 
+<form method="POST" action="/stop">
+    <button type="submit">Stop Monitoring</button>
+</form>
+
+{% if monitoring %}
+<p style="color:green;">Monitoring is ON</p>
+{% else %}
+<p style="color:red;">Monitoring is OFF</p>
+{% endif %}
 <h2>Network Traffic Data</h2>
 
 <table border="1">
