@@ -1,19 +1,22 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     margin: 20px;
+    background-color: #f4f6f8;
 }
 
 h1 {
-    color: darkblue;
+    color: #1f4e79;
 }
 
 table {
-    border-collapse: collapse;
     width: 100%;
+    border-collapse: collapse;
+    background: white;
 }
 
 th {
-    background-color: lightgray;
+    background-color: #1f4e79;
+    color: white;
     padding: 8px;
 }
 
@@ -25,4 +28,9 @@ td {
 button {
     padding: 8px 15px;
     margin: 5px;
+    cursor: pointer;
+}
+
+hr {
+    margin: 20px 0;
 }
