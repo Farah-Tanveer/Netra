@@ -25,6 +25,29 @@
 {% endif %}
 <h2>Network Traffic Data</h2>
 
+<h2>Filter Traffic</h2>
+
+<form method="POST">
+
+<label>Protocol:</label>
+<select name="protocol">
+    <option value="ALL">ALL</option>
+    <option value="TCP">TCP</option>
+    <option value="UDP">UDP</option>
+    <option value="ICMP">ICMP</option>
+</select>
+
+<label>Source IP:</label>
+<input type="text" name="src_ip">
+
+<label>Destination IP:</label>
+<input type="text" name="dest_ip">
+
+<button type="submit">Filter</button>
+
+<button type="reset">Clear</button>
+
+</form>
 <table border="1">
 
 <tr>

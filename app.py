@@ -3,7 +3,6 @@ import pandas as pd
 
 app = Flask(__name__)
 
-# Monitoring State
 monitoring = False
 
 # Port → Service Mapping
@@ -16,14 +15,16 @@ port_service_map = {
     161: "SNMP"
 }
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
     global monitoring
+
+    data = []
 
     if monitoring:
         df = pd.read_csv("network_traffic.csv")
 
-        # Service Mapping
+        # Add Service Column
         services = []
         for port in df["Destination_Port"]:
             service = port_service_map.get(port, "Unknown")
@@ -31,10 +32,21 @@ def home():
 
         df["Service"] = services
 
-        data = df.to_dict(orient="records")
+        # Apply Filters
+        protocol = request.form.get("protocol")
+        src_ip = request.form.get("src_ip")
+        dest_ip = request.form.get("dest_ip")
 
-    else:
-        data = []
+        if protocol and protocol != "ALL":
+            df = df[df["Protocol"] == protocol]
+
+        if src_ip:
+            df = df[df["Source_IP"] == src_ip]
+
+        if dest_ip:
+            df = df[df["Destination_IP"] == dest_ip]
+
+        data = df.to_dict(orient="records")
 
     return render_template(
         "index.html",
