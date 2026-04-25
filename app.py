@@ -1,6 +1,12 @@
 from flask import Flask, render_template, request, redirect
 import pandas as pd
 
+from datetime import datetime
+
+def write_log(message):
+    with open("logs.txt", "a") as f:
+        time_stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        f.write(f"{time_stamp} - {message}\n")
 app = Flask(__name__)
 
 monitoring = False
@@ -69,18 +75,30 @@ def home():
 
         data = df.to_dict(orient="records")
 
+    logs = []
+
+    try:
+        with open("logs.txt", "r") as f:
+            logs = f.readlines()
+    except:
+        logs = []
+
     return render_template(
         "index.html",
         data=data,
         monitoring=monitoring,
-        stats=stats
-    )
+        stats=stats,
+        logs=logs
+)
 
 
 @app.route('/start', methods=['POST'])
 def start_monitoring():
     global monitoring
     monitoring = True
+
+    write_log("Monitoring Started")
+
     return redirect('/')
 
 
@@ -88,6 +106,9 @@ def start_monitoring():
 def stop_monitoring():
     global monitoring
     monitoring = False
+
+    write_log("Monitoring Stopped")
+
     return redirect('/')
 
 
