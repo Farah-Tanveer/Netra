@@ -3,6 +3,7 @@
 
 <head>
     <title>Network Traffic Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -12,7 +13,35 @@
 <button>Start Monitoring</button>
 <button>Stop Monitoring</button>
 
-<p>System Ready...</p>
+<h2>Network Traffic Data</h2>
+
+<table border="1">
+
+<tr>
+    <th>Time</th>
+    <th>Source IP</th>
+    <th>Destination IP</th>
+    <th>Protocol</th>
+    <th>Packet Size</th>
+    <th>Source Port</th>
+    <th>Destination Port</th>
+    <th>Service</th>
+</tr>
+
+{% for row in data %}
+<tr>
+    <td>{{ row.Time }}</td>
+    <td>{{ row.Source_IP }}</td>
+    <td>{{ row.Destination_IP }}</td>
+    <td>{{ row.Protocol }}</td>
+    <td>{{ row.Packet_Size }}</td>
+    <td>{{ row.Source_Port }}</td>
+    <td>{{ row.Destination_Port }}</td>
+    <td>{{ row.Service }}</td>
+</tr>
+{% endfor %}
+
+</table>
 
 </body>
 
