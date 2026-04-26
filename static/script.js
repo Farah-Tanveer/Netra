@@ -1,413 +1,301 @@
-/* =============================================
-   NETRA - Frontend JavaScript
-   Pure vanilla JS with no dependencies
-   ============================================= */
+// ===== NETRA — Main Script =====
 
-// ================== STATE MANAGEMENT ==================
+let isMonitoring = false;
+let packetCount = 0;
+let updateInterval = null;
 
-const appState = {
-    currentSection: 'home',
-    isCapturing: false,
-    isDarkTheme: localStorage.getItem('theme') !== 'light',
-    capturedPackets: [],
-    packetCount: 0,
-    dataSize: 0,
-    startTime: null,
-    captureInterval: null,
-    mockProtocols: ['TCP', 'UDP', 'ICMP', 'DNS', 'HTTP', 'HTTPS'],
-    mockIPs: [
-        '192.168.1.105',
-        '10.0.0.42',
-        '172.16.0.89',
-        '192.168.1.15',
-        '8.8.8.8'
-    ],
-    mockPorts: [80, 443, 22, 53, 3306, 5432, 8080, 9090]
-};
-
-// ================== INITIALIZATION ==================
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
-});
-
-function initializeApp() {
-    // Set initial theme
-    applyTheme();
-    
-    // Set up navigation
-    setupNavigation();
-    
-    // Set up theme toggle
-    setupThemeToggle();
-    
-    // Set up dashboard controls
-    setupDashboard();
-    
-    // Set up contact form
-    setupContactForm();
-    
-    // Set up keyboard shortcuts
-    setupKeyboardShortcuts();
-    
-    // Show home section
-    navigateToSection('home');
-    
-    console.log('Netra Frontend Initialized');
+// ===== THEME =====
+function initTheme() {
+    const saved = localStorage.getItem('netra-theme') || 'dark';
+    applyTheme(saved);
 }
-
-// ================== NAVIGATION ==================
-
-function setupNavigation() {
-    const navLinks = document.querySelectorAll('.nav-link');
-    const hamburger = document.querySelector('.hamburger');
-    const navMenu = document.querySelector('.nav-menu');
-
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const sectionId = link.getAttribute('data-section');
-            navigateToSection(sectionId);
-            
-            // Close mobile menu
-            navMenu.classList.remove('active');
-            hamburger.classList.remove('active');
-        });
-    });
-
-    // Hamburger menu toggle
-    hamburger.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        hamburger.classList.toggle('active');
-    });
-}
-
-function navigateToSection(sectionId) {
-    // Update state
-    appState.currentSection = sectionId;
-
-    // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-    });
-
-    // Show target section
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-        targetSection.classList.add('active');
-    }
-
-    // Update nav links
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('data-section') === sectionId) {
-            link.classList.add('active');
-        }
-    });
-
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // Stop capture if navigating away from dashboard
-    if (sectionId !== 'dashboard' && appState.isCapturing) {
-        stopCapture();
-    }
-}
-
-// ================== THEME TOGGLE ==================
-
-function setupThemeToggle() {
-    const themeToggle = document.getElementById('themeToggle');
-    themeToggle.addEventListener('click', toggleTheme);
-}
-
-function toggleTheme() {
-    appState.isDarkTheme = !appState.isDarkTheme;
-    localStorage.setItem('theme', appState.isDarkTheme ? 'dark' : 'light');
-    applyTheme();
-}
-
-function applyTheme() {
-    const html = document.documentElement;
-    const themeToggle = document.getElementById('themeToggle');
-    
-    if (appState.isDarkTheme) {
-        html.classList.remove('light-theme');
-        document.body.classList.remove('light-theme');
-        themeToggle.textContent = '🌙';
-    } else {
-        html.classList.add('light-theme');
+function applyTheme(theme) {
+    if (theme === 'light') {
         document.body.classList.add('light-theme');
-        themeToggle.textContent = '☀️';
+    } else {
+        document.body.classList.remove('light-theme');
     }
+    localStorage.setItem('netra-theme', theme);
+}
+function toggleTheme() {
+    const isLight = document.body.classList.contains('light-theme');
+    applyTheme(isLight ? 'dark' : 'light');
 }
 
-// ================== DASHBOARD CONTROLS ==================
-
-function setupDashboard() {
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const checkStatsBtn = document.getElementById('checkStatsBtn');
-    const backToDashboard = document.getElementById('backToDashboard');
-    const startCaptureBtn = document.getElementById('startCaptureBtn');
-
-    startBtn.addEventListener('click', startCapture);
-    stopBtn.addEventListener('click', stopCapture);
-    checkStatsBtn.addEventListener('click', () => navigateToSection('stats'));
-    backToDashboard.addEventListener('click', () => navigateToSection('dashboard'));
-    startCaptureBtn.addEventListener('click', () => {
-        navigateToSection('dashboard');
-        setTimeout(() => startCapture(), 300);
+// ===== NAVBAR SCROLL EFFECT =====
+function initNavbar() {
+    const navbar = document.getElementById('navbar');
+    if (!navbar) return;
+    window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 30);
     });
-}
-
-function startCapture() {
-    appState.isCapturing = true;
-    appState.packetCount = 0;
-    appState.dataSize = 0;
-    appState.capturedPackets = [];
-    appState.startTime = Date.now();
-
-    // Update UI
-    document.getElementById('startBtn').disabled = true;
-    document.getElementById('stopBtn').disabled = false;
-    document.getElementById('statusDot').classList.add('active');
-    document.getElementById('statusText').textContent = 'Capturing...';
-
-    // Clear packet list
-    document.getElementById('packetList').innerHTML = '';
-
-    // Start duration counter
-    updateDuration();
-    appState.captureInterval = setInterval(updateDuration, 1000);
-
-    // Simulate packet capture
-    simulatePacketCapture();
-
-    console.log('Capture started');
-}
-
-function stopCapture() {
-    appState.isCapturing = false;
-
-    // Update UI
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-    document.getElementById('statusDot').classList.remove('active');
-    document.getElementById('statusText').textContent = 'Stopped';
-
-    // Clear interval
-    if (appState.captureInterval) {
-        clearInterval(appState.captureInterval);
-    }
-
-    console.log('Capture stopped');
-}
-
-function updateDuration() {
-    if (!appState.startTime) return;
-
-    const elapsed = Math.floor((Date.now() - appState.startTime) / 1000);
-    const minutes = Math.floor(elapsed / 60);
-    const seconds = elapsed % 60;
-
-    document.getElementById('duration').textContent = 
-        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
-function simulatePacketCapture() {
-    if (!appState.isCapturing) return;
-
-    // Generate random packet
-    const protocol = appState.mockProtocols[Math.floor(Math.random() * appState.mockProtocols.length)];
-    const srcIP = appState.mockIPs[Math.floor(Math.random() * appState.mockIPs.length)];
-    const dstIP = appState.mockIPs[Math.floor(Math.random() * appState.mockIPs.length)];
-    const port = appState.mockPorts[Math.floor(Math.random() * appState.mockPorts.length)];
-    const size = Math.floor(Math.random() * 1500) + 64; // 64-1564 bytes
-    const timestamp = new Date().toLocaleTimeString();
-
-    // Update counters
-    appState.packetCount++;
-    appState.dataSize += size;
-
-    // Update UI counters
-    document.getElementById('packetCount').textContent = appState.packetCount;
-    document.getElementById('dataSize').textContent = (appState.dataSize / (1024 * 1024)).toFixed(2) + ' MB';
-
-    // Add to packet list
-    const packetList = document.getElementById('packetList');
-    const packetItem = document.createElement('div');
-    packetItem.className = 'packet-item';
-    packetItem.innerHTML = `
-        <strong>${protocol}</strong> | 
-        ${srcIP}:${port} → ${dstIP} | 
-        <span style="color: var(--color-primary);">${size}B</span> | 
-        ${timestamp}
-    `;
-
-    // If this is the first packet, remove empty state
-    if (packetList.querySelector('.empty-state')) {
-        packetList.innerHTML = '';
-    }
-
-    packetList.insertBefore(packetItem, packetList.firstChild);
-
-    // Keep only last 50 packets
-    while (packetList.children.length > 50) {
-        packetList.removeChild(packetList.lastChild);
-    }
-
-    // Schedule next packet (random interval: 100-500ms)
-    const nextInterval = Math.random() * 400 + 100;
-    setTimeout(simulatePacketCapture, nextInterval);
-}
-
-// ================== CONTACT FORM ==================
-
-function setupContactForm() {
-    const contactForm = document.getElementById('contactForm');
-    
-    if (!contactForm) return;
-
-    contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        // Get form data
-        const formData = new FormData(contactForm);
-        const data = Object.fromEntries(formData);
-
-        // Validate
-        if (!data.name || !data.email || !data.subject || !data.message) {
-            showAlert('Please fill in all fields', 'error');
-            return;
-        }
-
-        // Simulate sending
-        console.log('Form submitted:', data);
-        
-        // Store in localStorage
-        localStorage.setItem('lastContact', JSON.stringify({
-            ...data,
-            timestamp: new Date().toISOString()
-        }));
-
-        // Show success message
-        contactForm.classList.remove('active');
-        document.getElementById('formSuccess').style.display = 'block';
-
-        // Reset form
-        contactForm.reset();
-
-        // Hide success after 5 seconds
-        setTimeout(() => {
-            document.getElementById('formSuccess').style.display = 'none';
-            contactForm.classList.add('active');
-        }, 5000);
-    });
-
-    // Make form active by default
-    contactForm.classList.add('active');
-}
-
-// ================== KEYBOARD SHORTCUTS ==================
-
-function setupKeyboardShortcuts() {
-    document.addEventListener('keydown', (e) => {
-        // Ctrl+K or Cmd+K - Toggle theme
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            toggleTheme();
-        }
-
-        // Ctrl+1 - Home
-        if ((e.ctrlKey || e.metaKey) && e.key === '1') {
-            e.preventDefault();
-            navigateToSection('home');
-        }
-
-        // Ctrl+2 - Dashboard
-        if ((e.ctrlKey || e.metaKey) && e.key === '2') {
-            e.preventDefault();
-            navigateToSection('dashboard');
-        }
-
-        // Ctrl+3 - Stats
-        if ((e.ctrlKey || e.metaKey) && e.key === '3') {
-            e.preventDefault();
-            navigateToSection('stats');
-        }
-
-        // Space - Start/Stop (in dashboard)
-        if (e.code === 'Space' && appState.currentSection === 'dashboard') {
-            e.preventDefault();
-            if (appState.isCapturing) {
-                stopCapture();
+    // Hamburger
+    const hamburger = document.getElementById('hamburger');
+    const navMenu = document.getElementById('navMenu');
+    if (hamburger && navMenu) {
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+            const spans = hamburger.querySelectorAll('span');
+            hamburger.classList.toggle('open');
+            if (hamburger.classList.contains('open')) {
+                spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                spans[1].style.opacity = '0';
+                spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
             } else {
-                startCapture();
+                spans[0].style.transform = '';
+                spans[1].style.opacity = '';
+                spans[2].style.transform = '';
             }
-        }
-    });
+        });
+        // Close menu on link click (mobile)
+        navMenu.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+                hamburger.classList.remove('open');
+                const spans = hamburger.querySelectorAll('span');
+                spans[0].style.transform = '';
+                spans[1].style.opacity = '';
+                spans[2].style.transform = '';
+            });
+        });
+    }
 }
 
-// ================== UTILITY FUNCTIONS ==================
-
-function showAlert(message, type = 'info') {
-    // Simple alert (can be enhanced with a toast notification system)
-    console.log(`[${type.toUpperCase()}] ${message}`);
+// ===== PARTICLES (Hero) =====
+function initParticles() {
+    const container = document.getElementById('particles');
+    if (!container) return;
+    for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (4 + Math.random() * 8) + 's';
+        p.style.animationDelay = Math.random() * 6 + 's';
+        p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+        container.appendChild(p);
+    }
 }
 
-// ================== SCROLL ANIMATIONS ==================
-
-function setupScrollAnimations() {
+// ===== SCROLL ANIMATIONS =====
+function initScrollAnimations() {
+    const els = document.querySelectorAll('.feature-card, .info-card, .tech-pill, .glass-card');
+    if (!els.length) return;
+    els.forEach(el => el.classList.add('fade-in'));
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
+                entry.target.classList.add('visible');
             }
         });
-    }, {
-        threshold: 0.1
-    });
-
-    document.querySelectorAll('.stats-card').forEach(card => {
-        observer.observe(card);
-    });
+    }, { threshold: 0.1 });
+    els.forEach(el => observer.observe(el));
 }
 
-// ================== EXPORT STATE FOR DEBUGGING ==================
+// ===== API CALLS =====
+async function startMonitoring() {
+    try {
+        const res = await fetch('/api/start-monitoring', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            isMonitoring = true;
+            packetCount = 0;
+            updateDashboardUI();
+            startAutoUpdate();
+            showNotification('Monitoring started!', 'success');
+        }
+    } catch (e) {
+        console.error(e);
+        showNotification('Error starting monitoring', 'error');
+    }
+}
 
-window.getAppState = () => appState;
-window.toggleDebugMode = () => {
-    console.log('=== NETRA APP STATE ===');
-    console.log('Current Section:', appState.currentSection);
-    console.log('Is Capturing:', appState.isCapturing);
-    console.log('Packets Captured:', appState.packetCount);
-    console.log('Data Size:', appState.dataSize);
-    console.log('Theme:', appState.isDarkTheme ? 'Dark' : 'Light');
-    console.log('=====================');
-};
+async function stopMonitoring() {
+    try {
+        const res = await fetch('/api/stop-monitoring', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            isMonitoring = false;
+            if (updateInterval) clearInterval(updateInterval);
+            updateDashboardUI();
+            showNotification('Monitoring stopped!', 'success');
+        }
+    } catch (e) {
+        console.error(e);
+        showNotification('Error stopping monitoring', 'error');
+    }
+}
 
-// ================== PERFORMANCE OPTIMIZATION ==================
+async function fetchTrafficData() {
+    try {
+        const protocol = document.getElementById('protocolFilter')?.value || 'ALL';
+        const srcIp = document.getElementById('srcIpFilter')?.value || '';
+        const destIp = document.getElementById('destIpFilter')?.value || '';
+        const params = new URLSearchParams({ protocol, src_ip: srcIp, dest_ip: destIp, limit: 50 });
+        const res = await fetch(`/api/traffic-data?${params}`);
+        const data = await res.json();
+        if (data.success) {
+            displayTraffic(data.data);
+            updateMiniStats(data.stats);
+            packetCount = data.stats.total;
+            updateDashboardUI();
+        }
+    } catch (e) { console.error(e); }
+}
 
-// Debounce resize events
-let resizeTimeout;
-window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        console.log('Window resized');
-    }, 250);
-});
+async function fetchDetailedStats() {
+    try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data.success) displayDetailedStats(data);
+    } catch (e) { console.error(e); }
+}
 
-// Monitor performance
-if (window.performance && window.performance.timing) {
-    window.addEventListener('load', () => {
+// ===== UI UPDATES =====
+function updateDashboardUI() {
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    const countEl = document.getElementById('packetCount');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const indicator = document.getElementById('statusIndicator');
+
+    if (dot) dot.className = isMonitoring ? 'status-dot active' : 'status-dot';
+    if (text) text.textContent = isMonitoring ? 'Monitoring Active' : 'Ready';
+    if (countEl) countEl.textContent = packetCount;
+    if (startBtn) startBtn.disabled = isMonitoring;
+    if (stopBtn) stopBtn.disabled = !isMonitoring;
+}
+
+function updateMiniStats(stats) {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || 0; };
+    set('packetCount', stats.total);
+    set('tcpCount', stats.tcp);
+    set('udpCount', stats.udp);
+}
+
+function displayTraffic(packets) {
+    const list = document.getElementById('packetList');
+    if (!list) return;
+    if (!packets.length) {
+        list.innerHTML = '<div class="empty-state"><p>No packets captured yet</p><p class="empty-hint">Click Start to begin monitoring</p></div>';
+        return;
+    }
+    let html = '<div class="traffic-table-wrapper"><table class="traffic-table"><thead><tr><th>Time</th><th>Source</th><th>Destination</th><th>Protocol</th><th>Port</th><th>Service</th><th>Size</th></tr></thead><tbody>';
+    packets.forEach(p => {
+        html += `<tr>
+            <td>${p.Time || '—'}</td>
+            <td><span class="ip-badge">${p.Source_IP}</span></td>
+            <td><span class="ip-badge">${p.Destination_IP}</span></td>
+            <td><span class="protocol-badge ${(p.Protocol||'').toLowerCase()}">${p.Protocol}</span></td>
+            <td>${p.Destination_Port}</td>
+            <td>${p.Service || 'Unknown'}</td>
+            <td>${p.Packet_Size} B</td>
+        </tr>`;
+    });
+    html += '</tbody></table></div>';
+    list.innerHTML = html;
+}
+
+function displayDetailedStats(data) {
+    // Summary
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
+    set('totalPackets', data.total_packets);
+    set('uniqueSources', data.unique_sources);
+    set('uniqueDestinations', data.unique_destinations);
+
+    // Protocols
+    const protocolList = document.getElementById('protocolList');
+    if (protocolList && data.protocols) {
+        const total = Object.values(data.protocols).reduce((a, b) => a + b, 0) || 1;
+        protocolList.innerHTML = Object.entries(data.protocols).map(([name, count]) => {
+            const pct = Math.round((count / total) * 100);
+            return `<div class="stat-row"><span class="stat-name">${name}</span><span class="stat-count">${count} (${pct}%)</span></div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${pct}%"></div></div>`;
+        }).join('');
+    }
+
+    // Sources
+    const sourcesList = document.getElementById('sourcesList');
+    if (sourcesList && data.top_sources) {
+        sourcesList.innerHTML = Object.entries(data.top_sources).map(([ip, count]) =>
+            `<div class="ip-item"><span class="ip-addr">${ip}</span><span class="ip-count">${count} packets</span></div>`
+        ).join('') || '<div class="empty-state"><p>No data</p></div>';
+    }
+
+    // Ports
+    const portsList = document.getElementById('portsList');
+    if (portsList && data.top_ports) {
+        const maxPort = Math.max(...Object.values(data.top_ports)) || 1;
+        portsList.innerHTML = Object.entries(data.top_ports).map(([name, count]) => {
+            const pct = Math.round((count / maxPort) * 100);
+            return `<div class="port-item"><div class="port-info"><span class="port-name">${name}</span><span class="port-count">${count}</span></div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${pct}%"></div></div></div>`;
+        }).join('');
+    }
+}
+
+// ===== AUTO UPDATE =====
+function startAutoUpdate() {
+    if (updateInterval) clearInterval(updateInterval);
+    updateInterval = setInterval(() => {
+        if (isMonitoring) fetchTrafficData();
+    }, 2000);
+}
+
+// ===== NOTIFICATIONS =====
+function showNotification(msg, type = 'info') {
+    const n = document.createElement('div');
+    n.className = `notification notification-${type}`;
+    n.textContent = msg;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 3200);
+}
+
+// ===== CONTACT FORM =====
+function initContactForm() {
+    const form = document.getElementById('contactForm');
+    const success = document.getElementById('formSuccess');
+    if (!form || !success) return;
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        form.style.display = 'none';
+        success.classList.add('show');
         setTimeout(() => {
-            const perfData = window.performance.timing;
-            const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
-            console.log(`Page Load Time: ${pageLoadTime}ms`);
-        }, 0);
+            form.style.display = '';
+            success.classList.remove('show');
+            form.reset();
+        }, 3500);
     });
 }
 
-console.log('Netra Frontend Script Loaded');
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    initNavbar();
+    initParticles();
+    initScrollAnimations();
+    initContactForm();
+
+    // Theme toggle
+    document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+
+    // Dashboard buttons
+    document.getElementById('startBtn')?.addEventListener('click', startMonitoring);
+    document.getElementById('stopBtn')?.addEventListener('click', stopMonitoring);
+    document.getElementById('applyFiltersBtn')?.addEventListener('click', fetchTrafficData);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'k') {
+            e.preventDefault();
+            toggleTheme();
+        }
+    });
+
+    // Page-specific init
+    if (document.body.classList.contains('page-dashboard')) {
+        updateDashboardUI();
+        fetchTrafficData();
+    }
+    if (document.body.classList.contains('page-stats')) {
+        fetchDetailedStats();
+    }
+});
