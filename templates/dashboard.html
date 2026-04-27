@@ -45,18 +45,14 @@
             <p class="page-desc">Monitor and analyze network traffic in real-time</p>
         </div>
 
-        <div class="dashboard-grid">
-            <!-- Control Panel -->
-            <div class="glass-card control-panel">
-                <h3 class="panel-title">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Capture Controls
-                </h3>
+        <!-- Horizontal Control Bar -->
+        <div class="control-bar glass-card">
+            <div class="control-bar-left">
                 <div class="status-indicator" id="statusIndicator">
                     <div class="status-dot" id="statusDot"></div>
                     <span id="statusText">Ready</span>
                 </div>
-                <div class="button-group">
+                <div class="control-bar-buttons">
                     <button class="btn btn-success" id="startBtn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         Start
@@ -66,29 +62,9 @@
                         Stop
                     </button>
                 </div>
-                <div class="mini-stats">
-                    <div class="mini-stat">
-                        <span class="mini-stat-label">Packets</span>
-                        <span class="mini-stat-value" id="packetCount">0</span>
-                    </div>
-                    <div class="mini-stat">
-                        <span class="mini-stat-label">TCP</span>
-                        <span class="mini-stat-value" id="tcpCount">0</span>
-                    </div>
-                    <div class="mini-stat">
-                        <span class="mini-stat-label">UDP</span>
-                        <span class="mini-stat-value" id="udpCount">0</span>
-                    </div>
-                </div>
             </div>
-
-            <!-- Filters Panel -->
-            <div class="glass-card filter-panel">
-                <h3 class="panel-title">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                    Filters
-                </h3>
-                <div class="filter-group">
+            <div class="control-bar-filters">
+                <div class="filter-inline">
                     <label for="protocolFilter">Protocol</label>
                     <select id="protocolFilter" class="form-control">
                         <option value="ALL">All Protocols</option>
@@ -97,29 +73,52 @@
                         <option value="ICMP">ICMP</option>
                     </select>
                 </div>
-                <div class="filter-group">
+                <div class="filter-inline">
                     <label for="srcIpFilter">Source IP</label>
                     <input type="text" id="srcIpFilter" class="form-control" placeholder="e.g., 192.168.1.5">
                 </div>
-                <div class="filter-group">
-                    <label for="destIpFilter">Destination IP</label>
+                <div class="filter-inline">
+                    <label for="destIpFilter">Dest IP</label>
                     <input type="text" id="destIpFilter" class="form-control" placeholder="e.g., 8.8.8.8">
                 </div>
-                <button class="btn btn-primary btn-block" id="applyFiltersBtn">Apply Filters</button>
+                <button class="btn btn-primary" id="applyFiltersBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    Apply
+                </button>
             </div>
+        </div>
 
-            <!-- Packet List -->
-            <div class="glass-card packet-panel">
-                <h3 class="panel-title">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Live Packets
-                </h3>
-                <div class="packet-list" id="packetList">
-                    <div class="empty-state">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <p>No packets captured yet</p>
-                        <p class="empty-hint">Click Start to begin monitoring</p>
-                    </div>
+        <!-- Stats Row -->
+        <div class="dash-stats-row">
+            <div class="dash-stat glass-card">
+                <span class="dash-stat-label">Packets</span>
+                <span class="dash-stat-value" id="packetCount">0</span>
+            </div>
+            <div class="dash-stat glass-card">
+                <span class="dash-stat-label">TCP</span>
+                <span class="dash-stat-value" id="tcpCount">0</span>
+            </div>
+            <div class="dash-stat glass-card">
+                <span class="dash-stat-label">UDP</span>
+                <span class="dash-stat-value" id="udpCount">0</span>
+            </div>
+            <div class="dash-stat glass-card">
+                <span class="dash-stat-label">ICMP</span>
+                <span class="dash-stat-value" id="icmpCount">0</span>
+            </div>
+        </div>
+
+        <!-- Packet List -->
+        <div class="glass-card packet-panel">
+            <h3 class="panel-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Live Packets
+            </h3>
+            <div class="packet-list" id="packetList">
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <p>No packets captured yet</p>
+                    <p class="empty-hint">Click Start to begin monitoring</p>
                 </div>
             </div>
         </div>
