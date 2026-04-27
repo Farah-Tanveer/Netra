@@ -83,7 +83,11 @@
                 </div>
                 <button class="btn btn-primary" id="applyFiltersBtn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                    Apply
+                    Filter
+                </button>
+                <button class="btn btn-outline" id="resetFiltersBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset
                 </button>
             </div>
         </div>
@@ -106,6 +110,16 @@
                 <span class="dash-stat-label">ICMP</span>
                 <span class="dash-stat-value" id="icmpCount">0</span>
             </div>
+            <div class="dash-stat glass-card">
+                <span class="dash-stat-label">Avg Size</span>
+                <span class="dash-stat-value" id="avgSize">0</span>
+                <span class="dash-stat-unit">bytes</span>
+            </div>
+            <div class="dash-stat glass-card">
+                <span class="dash-stat-label">Data</span>
+                <span class="dash-stat-value" id="totalData">0</span>
+                <span class="dash-stat-unit">KB</span>
+            </div>
         </div>
 
         <!-- Packet List -->
@@ -113,12 +127,31 @@
             <h3 class="panel-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Live Packets
+                <span class="live-badge" id="liveBadge" style="display:none;">
+                    <span class="live-dot"></span> LIVE
+                </span>
             </h3>
             <div class="packet-list" id="packetList">
                 <div class="empty-state">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <p>No packets captured yet</p>
-                    <p class="empty-hint">Click Start to begin monitoring</p>
+                    <p class="empty-hint">Click Start to begin real-time monitoring</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log / Record Display Section -->
+        <div class="glass-card log-panel">
+            <h3 class="panel-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                System Logs
+                <button class="btn-sm btn-outline" id="refreshLogsBtn" title="Refresh logs">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                </button>
+            </h3>
+            <div class="log-list" id="logList">
+                <div class="empty-state">
+                    <p>No logs yet</p>
                 </div>
             </div>
         </div>

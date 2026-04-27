@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 import os
 
+from utils.packet_reader import PacketSniffer, PORT_SERVICE_MAP
+
 app = Flask(__name__)
 CORS(app)
 
@@ -14,8 +16,8 @@ TRAFFIC_FILE = "network_traffic.csv"
 LOGS_FILE = "logs.txt"
 STATS_FILE = "stats.json"
 
-monitoring = False
-packet_count = 0
+# ===== REAL-TIME SNIFFER INSTANCE =====
+sniffer = PacketSniffer(csv_file=TRAFFIC_FILE, log_file=LOGS_FILE)
 
 # ===== UTILITY FUNCTIONS =====
 def write_log(message):
@@ -45,13 +47,6 @@ def load_stats():
         print(f"Stats load error: {e}")
     return {"sessions": 0, "total_packets": 0, "total_data": 0}
 
-# ===== PORT TO SERVICE MAPPING =====
-PORT_SERVICE_MAP = {
-    80: "HTTP", 443: "HTTPS", 53: "DNS", 22: "SSH",
-    67: "DHCP", 161: "SNMP", 3306: "MySQL", 5432: "PostgreSQL",
-    3389: "RDP", 21: "FTP", 25: "SMTP", 110: "POP3"
-}
-
 # ===== ROUTES =====
 
 @app.route('/')
@@ -72,37 +67,79 @@ def stats_page():
 @app.route('/api/status', methods=['GET'])
 def get_status():
     """Get monitoring status"""
-    global packet_count
-    stats = load_stats()
+    live_stats = sniffer.get_stats()
+    saved_stats = load_stats()
     return jsonify({
-        "monitoring": monitoring,
-        "packet_count": packet_count,
-        "total_sessions": stats.get("sessions", 0)
+        "monitoring": sniffer.is_running,
+        "packet_count": live_stats["total"],
+        "total_sessions": saved_stats.get("sessions", 0),
+        "live_stats": live_stats
     })
 
 @app.route('/api/start-monitoring', methods=['POST'])
 def start_monitoring_api():
-    """Start traffic monitoring"""
-    global monitoring, packet_count
-    monitoring = True
-    packet_count = 0
+    """Start real-time packet capture"""
+    # Increment session count
     stats = load_stats()
     stats["sessions"] = stats.get("sessions", 0) + 1
     save_stats(stats)
-    write_log("[START] Monitoring session initiated")
-    return jsonify({"success": True, "message": "Monitoring started"})
+
+    result = sniffer.start()
+    write_log("[START] Real-time monitoring session initiated")
+    return jsonify(result)
 
 @app.route('/api/stop-monitoring', methods=['POST'])
 def stop_monitoring_api():
-    """Stop traffic monitoring"""
-    global monitoring, packet_count
-    monitoring = False
-    write_log(f"[STOP] Monitoring session ended | Packets Captured: {packet_count}")
-    return jsonify({"success": True, "message": "Monitoring stopped"})
+    """Stop real-time packet capture"""
+    result = sniffer.stop()
+
+    # Update persistent stats
+    live = sniffer.get_stats()
+    stats = load_stats()
+    stats["total_packets"] = stats.get("total_packets", 0) + live["total"]
+    stats["total_data"] = stats.get("total_data", 0) + live["total_data"]
+    save_stats(stats)
+
+    write_log(f"[STOP] Monitoring session ended | Packets Captured: {live['total']}")
+    return jsonify(result)
+
+@app.route('/api/live-packets', methods=['GET'])
+def get_live_packets():
+    """Get real-time captured packets from the sniffer buffer."""
+    try:
+        limit = int(request.args.get('limit', 50))
+        protocol = request.args.get('protocol', 'ALL')
+        src_ip = request.args.get('src_ip', '')
+        dest_ip = request.args.get('dest_ip', '')
+
+        packets = sniffer.get_live_packets(count=200)
+
+        # Apply filters
+        if protocol and protocol != 'ALL':
+            packets = [p for p in packets if p['Protocol'] == protocol]
+        if src_ip:
+            packets = [p for p in packets if p['Source_IP'] == src_ip]
+        if dest_ip:
+            packets = [p for p in packets if p['Destination_IP'] == dest_ip]
+
+        # Get latest N packets
+        packets = packets[-limit:]
+
+        live_stats = sniffer.get_stats()
+
+        return jsonify({
+            "data": packets,
+            "stats": live_stats,
+            "is_live": True,
+            "timestamp": datetime.now().isoformat(),
+            "success": True
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "success": False}), 500
 
 @app.route('/api/traffic-data', methods=['GET'])
 def get_traffic_data():
-    """Get filtered traffic data"""
+    """Get filtered traffic data from CSV (historical + live)"""
     try:
         protocol = request.args.get('protocol', 'ALL')
         src_ip = request.args.get('src_ip', '')
@@ -178,6 +215,12 @@ def get_stats_detailed():
             for port, count in top_ports.items()
         }
 
+        # Average packet size
+        avg_size = round(df['Packet_Size'].mean(), 2) if len(df) > 0 else 0
+
+        # Total data transferred
+        total_data_kb = round(df['Packet_Size'].sum() / 1024, 2)
+
         return jsonify({
             "protocols": protocol_counts,
             "top_sources": top_src,
@@ -185,6 +228,8 @@ def get_stats_detailed():
             "total_packets": len(df),
             "unique_sources": df['Source_IP'].nunique(),
             "unique_destinations": df['Destination_IP'].nunique(),
+            "avg_packet_size": avg_size,
+            "total_data_kb": total_data_kb,
             "success": True
         })
 
@@ -199,6 +244,8 @@ def get_logs():
         if Path(LOGS_FILE).exists():
             with open(LOGS_FILE, 'r', encoding='utf-8') as f:
                 logs = f.readlines()[-limit:]
+            # Strip whitespace and filter out empty lines
+            logs = [l.strip() for l in logs if l.strip()]
             return jsonify({"logs": logs, "success": True})
         return jsonify({"logs": [], "success": True})
     except Exception as e:
@@ -221,6 +268,7 @@ if __name__ == '__main__':
     write_log("[INIT] Netra Application Started")
     print("\n" + "="*50)
     print("Netra - Network Traffic Monitoring Platform")
+    print("  Real-Time Packet Sniffing Enabled (Scapy)")
     print("="*50)
     print("Server running at: http://127.0.0.1:5000")
     print("="*50 + "\n")

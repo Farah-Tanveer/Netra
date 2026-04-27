@@ -101,7 +101,9 @@ async function startMonitoring() {
             packetCount = 0;
             updateDashboardUI();
             startAutoUpdate();
-            showNotification('Monitoring started!', 'success');
+            showNotification('Real-time packet capture started!', 'success');
+        } else {
+            showNotification(data.message || 'Failed to start', 'error');
         }
     } catch (e) {
         console.error(e);
@@ -117,12 +119,37 @@ async function stopMonitoring() {
             isMonitoring = false;
             if (updateInterval) clearInterval(updateInterval);
             updateDashboardUI();
-            showNotification('Monitoring stopped!', 'success');
+            showNotification(
+                `Monitoring stopped — ${data.packets_captured || 0} packets captured`,
+                'success'
+            );
+            // Fetch final data from CSV
+            fetchTrafficData();
+            fetchLogs();
         }
     } catch (e) {
         console.error(e);
         showNotification('Error stopping monitoring', 'error');
     }
+}
+
+async function fetchLivePackets() {
+    try {
+        const protocol = document.getElementById('protocolFilter')?.value || 'ALL';
+        const srcIp = document.getElementById('srcIpFilter')?.value || '';
+        const destIp = document.getElementById('destIpFilter')?.value || '';
+        const params = new URLSearchParams({
+            protocol, src_ip: srcIp, dest_ip: destIp, limit: 50
+        });
+        const res = await fetch(`/api/live-packets?${params}`);
+        const data = await res.json();
+        if (data.success) {
+            displayTraffic(data.data, true);
+            updateMiniStats(data.stats);
+            packetCount = data.stats.total;
+            updateDashboardUI();
+        }
+    } catch (e) { console.error(e); }
 }
 
 async function fetchTrafficData() {
@@ -134,10 +161,20 @@ async function fetchTrafficData() {
         const res = await fetch(`/api/traffic-data?${params}`);
         const data = await res.json();
         if (data.success) {
-            displayTraffic(data.data);
+            displayTraffic(data.data, false);
             updateMiniStats(data.stats);
             packetCount = data.stats.total;
             updateDashboardUI();
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function fetchLogs() {
+    try {
+        const res = await fetch('/api/logs?limit=30');
+        const data = await res.json();
+        if (data.success) {
+            displayLogs(data.logs);
         }
     } catch (e) { console.error(e); }
 }
@@ -150,6 +187,23 @@ async function fetchDetailedStats() {
     } catch (e) { console.error(e); }
 }
 
+// ===== RESET FILTERS =====
+function resetFilters() {
+    const protocolFilter = document.getElementById('protocolFilter');
+    const srcIpFilter = document.getElementById('srcIpFilter');
+    const destIpFilter = document.getElementById('destIpFilter');
+    if (protocolFilter) protocolFilter.value = 'ALL';
+    if (srcIpFilter) srcIpFilter.value = '';
+    if (destIpFilter) destIpFilter.value = '';
+    // Re-fetch data with cleared filters
+    if (isMonitoring) {
+        fetchLivePackets();
+    } else {
+        fetchTrafficData();
+    }
+    showNotification('Filters cleared', 'success');
+}
+
 // ===== UI UPDATES =====
 function updateDashboardUI() {
     const dot = document.getElementById('statusDot');
@@ -157,43 +211,80 @@ function updateDashboardUI() {
     const countEl = document.getElementById('packetCount');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const indicator = document.getElementById('statusIndicator');
+    const liveBadge = document.getElementById('liveBadge');
 
     if (dot) dot.className = isMonitoring ? 'status-dot active' : 'status-dot';
-    if (text) text.textContent = isMonitoring ? 'Monitoring Active' : 'Ready';
+    if (text) text.textContent = isMonitoring ? 'Capturing Live Packets' : 'Ready';
     if (countEl) countEl.textContent = packetCount;
     if (startBtn) startBtn.disabled = isMonitoring;
     if (stopBtn) stopBtn.disabled = !isMonitoring;
+    if (liveBadge) liveBadge.style.display = isMonitoring ? 'inline-flex' : 'none';
 }
 
 function updateMiniStats(stats) {
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || 0; };
+    const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val || 0;
+    };
     set('packetCount', stats.total);
     set('tcpCount', stats.tcp);
     set('udpCount', stats.udp);
+    set('icmpCount', stats.icmp);
+    set('avgSize', stats.avg_size || 0);
+    set('totalData', stats.total_data || 0);
 }
 
-function displayTraffic(packets) {
+function displayTraffic(packets, isLive) {
     const list = document.getElementById('packetList');
     if (!list) return;
-    if (!packets.length) {
-        list.innerHTML = '<div class="empty-state"><p>No packets captured yet</p><p class="empty-hint">Click Start to begin monitoring</p></div>';
+    if (!packets || !packets.length) {
+        list.innerHTML = '<div class="empty-state"><p>No packets captured yet</p><p class="empty-hint">Click Start to begin real-time monitoring</p></div>';
         return;
     }
-    let html = '<div class="traffic-table-wrapper"><table class="traffic-table"><thead><tr><th>Time</th><th>Source</th><th>Destination</th><th>Protocol</th><th>Port</th><th>Service</th><th>Size</th></tr></thead><tbody>';
+    let html = '<div class="traffic-table-wrapper"><table class="traffic-table"><thead><tr><th>Time</th><th>Source IP</th><th>Destination IP</th><th>Protocol</th><th>Src Port</th><th>Dst Port</th><th>Service</th><th>Size</th></tr></thead><tbody>';
     packets.forEach(p => {
+        const service = p.Service || 'Unknown';
         html += `<tr>
             <td>${p.Time || '—'}</td>
             <td><span class="ip-badge">${p.Source_IP}</span></td>
             <td><span class="ip-badge">${p.Destination_IP}</span></td>
             <td><span class="protocol-badge ${(p.Protocol||'').toLowerCase()}">${p.Protocol}</span></td>
+            <td>${p.Source_Port}</td>
             <td>${p.Destination_Port}</td>
-            <td>${p.Service || 'Unknown'}</td>
+            <td><span class="service-badge">${service}</span></td>
             <td>${p.Packet_Size} B</td>
         </tr>`;
     });
     html += '</tbody></table></div>';
     list.innerHTML = html;
+    // Auto-scroll to bottom for live data
+    if (isLive) {
+        list.scrollTop = list.scrollHeight;
+    }
+}
+
+function displayLogs(logs) {
+    const logList = document.getElementById('logList');
+    if (!logList) return;
+    if (!logs || !logs.length) {
+        logList.innerHTML = '<div class="empty-state"><p>No logs yet</p></div>';
+        return;
+    }
+    let html = '';
+    // Show newest first
+    const reversed = [...logs].reverse();
+    reversed.forEach(log => {
+        // Parse log type for styling
+        let logClass = 'log-info';
+        if (log.includes('[START]')) logClass = 'log-start';
+        else if (log.includes('[STOP]')) logClass = 'log-stop';
+        else if (log.includes('[INIT]')) logClass = 'log-init';
+        else if (log.includes('[SNIFFER]')) logClass = 'log-sniffer';
+        else if (log.includes('[ERROR]')) logClass = 'log-error';
+
+        html += `<div class="log-entry ${logClass}">${log}</div>`;
+    });
+    logList.innerHTML = html;
 }
 
 function displayDetailedStats(data) {
@@ -202,6 +293,8 @@ function displayDetailedStats(data) {
     set('totalPackets', data.total_packets);
     set('uniqueSources', data.unique_sources);
     set('uniqueDestinations', data.unique_destinations);
+    set('avgPacketSize', data.avg_packet_size ? `${data.avg_packet_size} B` : '—');
+    set('totalDataKb', data.total_data_kb ? `${data.total_data_kb} KB` : '—');
 
     // Protocols
     const protocolList = document.getElementById('protocolList');
@@ -235,9 +328,12 @@ function displayDetailedStats(data) {
 // ===== AUTO UPDATE =====
 function startAutoUpdate() {
     if (updateInterval) clearInterval(updateInterval);
+    // Fetch live packets every 1.5 seconds during monitoring
     updateInterval = setInterval(() => {
-        if (isMonitoring) fetchTrafficData();
-    }, 2000);
+        if (isMonitoring) {
+            fetchLivePackets();
+        }
+    }, 1500);
 }
 
 // ===== NOTIFICATIONS =====
@@ -280,7 +376,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dashboard buttons
     document.getElementById('startBtn')?.addEventListener('click', startMonitoring);
     document.getElementById('stopBtn')?.addEventListener('click', stopMonitoring);
-    document.getElementById('applyFiltersBtn')?.addEventListener('click', fetchTrafficData);
+    document.getElementById('applyFiltersBtn')?.addEventListener('click', () => {
+        if (isMonitoring) fetchLivePackets();
+        else fetchTrafficData();
+    });
+    document.getElementById('resetFiltersBtn')?.addEventListener('click', resetFilters);
+    document.getElementById('refreshLogsBtn')?.addEventListener('click', fetchLogs);
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -294,6 +395,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.body.classList.contains('page-dashboard')) {
         updateDashboardUI();
         fetchTrafficData();
+        fetchLogs();
+
+        // Check if monitoring is already active (page reload)
+        fetch('/api/status')
+            .then(r => r.json())
+            .then(data => {
+                if (data.monitoring) {
+                    isMonitoring = true;
+                    packetCount = data.packet_count || 0;
+                    updateDashboardUI();
+                    startAutoUpdate();
+                }
+            })
+            .catch(() => {});
     }
     if (document.body.classList.contains('page-stats')) {
         fetchDetailedStats();
