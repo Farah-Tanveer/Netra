@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 from flask_cors import CORS
 import pandas as pd
 import json
@@ -21,7 +21,7 @@ sniffer = PacketSniffer(csv_file=TRAFFIC_FILE, log_file=LOGS_FILE)
 
 # ===== UTILITY FUNCTIONS =====
 def write_log(message):
-    """Log system events with timestamps"""
+    """Log system e/vents with timestamps"""
     try:
         with open(LOGS_FILE, "a", encoding="utf-8") as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -134,6 +134,17 @@ def get_live_packets():
             "timestamp": datetime.now().isoformat(),
             "success": True
         })
+    except Exception as e:
+        return jsonify({"error": str(e), "success": False}), 500
+
+@app.route('/api/export-csv', methods=['GET'])
+def export_csv():
+    """Export the traffic CSV file"""
+    try:
+        if Path(TRAFFIC_FILE).exists():
+            return send_file(TRAFFIC_FILE, as_attachment=True, download_name="network_traffic_export.csv", mimetype="text/csv")
+        else:
+            return jsonify({"error": "No traffic data available", "success": False}), 404
     except Exception as e:
         return jsonify({"error": str(e), "success": False}), 500
 

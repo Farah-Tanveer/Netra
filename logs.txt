@@ -292,3 +292,78 @@
 2026-04-27 21:33:14 - [SNIFFER] Real-time packet capture started
 2026-04-27 21:33:15 - [STOP] Monitoring ended | Packets: 317 | Data: 168.1 KB
 2026-04-27 21:33:15 - [STOP] Monitoring session ended | Packets Captured: 317
+2026-04-29 21:46:39 - [INIT] Netra Application Started
+2026-04-29 21:46:41 - [INIT] Netra Application Started
+2026-04-29 21:54:39 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:39 - [START] Real-time monitoring session initiated
+2026-04-29 21:54:39 - [START] Real-time monitoring session initiated
+2026-04-29 21:54:40 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:41 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:42 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:43 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:44 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:45 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:46 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:47 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:48 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:49 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:50 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:51 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:52 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:54 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:55 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:56 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:54:56 - [STOP] Monitoring ended | Packets: 2064 | Data: 1265.56 KB
+2026-04-29 21:54:56 - [STOP] Monitoring session ended | Packets Captured: 2064
+2026-04-29 21:56:34 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:56:34 - [START] Real-time monitoring session initiated
+2026-04-29 21:56:34 - [START] Real-time monitoring session initiated
+2026-04-29 21:56:35 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:56:36 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:56:37 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:56:38 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:56:39 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:56:40 - [SNIFFER] Real-time packet capture started
+2026-04-29 21:56:42 - [STOP] Monitoring ended | Packets: 28 | Data: 2.5 KB
+2026-04-29 21:56:42 - [STOP] Monitoring session ended | Packets Captured: 28
+2026-04-29 22:00:46 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:00:46 - [START] Real-time monitoring session initiated
+2026-04-29 22:00:46 - [START] Real-time monitoring session initiated
+2026-04-29 22:00:47 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:00:48 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:00:49 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:00:50 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:00:50 - [STOP] Monitoring ended | Packets: 21 | Data: 2.99 KB
+2026-04-29 22:00:50 - [STOP] Monitoring session ended | Packets Captured: 21
+2026-04-29 22:03:41 - [START] Real-time monitoring session initiated
+2026-04-29 22:03:41 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:03:41 - [START] Real-time monitoring session initiated
+2026-04-29 22:03:42 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:03:43 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:03:44 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:03:45 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:03:46 - [STOP] Monitoring ended | Packets: 37 | Data: 10.33 KB
+2026-04-29 22:03:46 - [STOP] Monitoring session ended | Packets Captured: 37
+2026-04-29 22:14:38 - [START] Real-time monitoring session initiated
+2026-04-29 22:14:38 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:38 - [START] Real-time monitoring session initiated
+2026-04-29 22:14:39 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:40 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:41 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:42 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:43 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:44 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:45 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:46 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:14:46 - [STOP] Monitoring ended | Packets: 261 | Data: 111.55 KB
+2026-04-29 22:14:46 - [STOP] Monitoring session ended | Packets Captured: 261
+2026-04-29 22:19:22 - [INIT] Netra Application Started
+2026-04-29 22:24:53 - [START] Real-time monitoring session initiated
+2026-04-29 22:24:53 - [START] Real-time monitoring session initiated
+2026-04-29 22:24:53 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:24:54 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:24:55 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:24:56 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:24:57 - [SNIFFER] Real-time packet capture started
+2026-04-29 22:24:58 - [STOP] Monitoring ended | Packets: 33 | Data: 4.38 KB
+2026-04-29 22:24:58 - [STOP] Monitoring session ended | Packets Captured: 33

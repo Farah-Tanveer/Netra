@@ -204,6 +204,16 @@ function resetFilters() {
     showNotification('Filters cleared', 'success');
 }
 
+// ===== EXPORT CSV =====
+async function exportCsv() {
+    try {
+        window.location.href = '/api/export-csv';
+        showNotification('Exporting CSV...', 'success');
+    } catch (e) {
+        showNotification('Error exporting CSV', 'error');
+    }
+}
+
 // ===== UI UPDATES =====
 function updateDashboardUI() {
     const dot = document.getElementById('statusDot');
@@ -381,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else fetchTrafficData();
     });
     document.getElementById('resetFiltersBtn')?.addEventListener('click', resetFilters);
+    document.getElementById('exportCsvBtn')?.addEventListener('click', exportCsv);
     document.getElementById('refreshLogsBtn')?.addEventListener('click', fetchLogs);
 
     // Keyboard shortcuts

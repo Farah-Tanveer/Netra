@@ -56,12 +56,16 @@ class PacketSniffer:
     def _init_csv(self):
         """Create the CSV file with headers if it doesn't exist or is empty."""
         if not os.path.exists(self.csv_file) or os.path.getsize(self.csv_file) == 0:
-            with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow([
-                    "Time", "Source_IP", "Destination_IP", "Protocol",
-                    "Packet_Size", "Source_Port", "Destination_Port"
-                ])
+            self._clear_csv()
+
+    def _clear_csv(self):
+        """Clear the CSV file and write headers to start fresh."""
+        with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                "Time", "Source_IP", "Destination_IP", "Protocol",
+                "Packet_Size", "Source_Port", "Destination_Port"
+            ])
 
     def _write_log(self, message):
         """Append a timestamped log entry."""
@@ -174,6 +178,8 @@ class PacketSniffer:
 
         if not SCAPY_AVAILABLE:
             return {"success": False, "message": "Scapy is not installed"}
+
+        self._clear_csv()
 
         self.is_running = True
         self.packet_count = 0
