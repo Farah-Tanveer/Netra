@@ -1,8 +1,3 @@
-"""
-Netra — Real-Time Packet Sniffer using Scapy
-Captures live network traffic on the host machine.
-"""
-
 import threading
 import csv
 import os
@@ -30,10 +25,7 @@ PORT_SERVICE_MAP = {
 
 
 class PacketSniffer:
-    """
-    Real-time packet sniffer that captures live network traffic
-    using Scapy and stores results in CSV + in-memory buffer.
-    """
+
 
     def __init__(self, csv_file="network_traffic.csv", log_file="logs.txt", max_buffer=500):
         self.csv_file = csv_file
