@@ -99,8 +99,12 @@ async function startMonitoring() {
         if (data.success) {
             isMonitoring = true;
             packetCount = 0;
+            // Clear UI immediately so previous data doesn't linger
+            displayTraffic([], true);
+            updateMiniStats({total: 0, tcp: 0, udp: 0, icmp: 0, avg_size: 0, total_data: 0});
             updateDashboardUI();
             startAutoUpdate();
+            fetchLivePackets(); // Fetch immediately
             showNotification('Real-time packet capture started!', 'success');
         } else {
             showNotification(data.message || 'Failed to start', 'error');
@@ -139,7 +143,7 @@ async function fetchLivePackets() {
         const srcIp = document.getElementById('srcIpFilter')?.value || '';
         const destIp = document.getElementById('destIpFilter')?.value || '';
         const params = new URLSearchParams({
-            protocol, src_ip: srcIp, dest_ip: destIp, limit: 50
+            protocol, src_ip: srcIp, dest_ip: destIp, limit: 50, _t: Date.now()
         });
         const res = await fetch(`/api/live-packets?${params}`);
         const data = await res.json();
@@ -157,7 +161,7 @@ async function fetchTrafficData() {
         const protocol = document.getElementById('protocolFilter')?.value || 'ALL';
         const srcIp = document.getElementById('srcIpFilter')?.value || '';
         const destIp = document.getElementById('destIpFilter')?.value || '';
-        const params = new URLSearchParams({ protocol, src_ip: srcIp, dest_ip: destIp, limit: 50 });
+        const params = new URLSearchParams({ protocol, src_ip: srcIp, dest_ip: destIp, limit: 50, _t: Date.now() });
         const res = await fetch(`/api/traffic-data?${params}`);
         const data = await res.json();
         if (data.success) {
@@ -171,7 +175,7 @@ async function fetchTrafficData() {
 
 async function fetchLogs() {
     try {
-        const res = await fetch('/api/logs?limit=30');
+        const res = await fetch(`/api/logs?limit=30&_t=${Date.now()}`);
         const data = await res.json();
         if (data.success) {
             displayLogs(data.logs);
@@ -181,7 +185,7 @@ async function fetchLogs() {
 
 async function fetchDetailedStats() {
     try {
-        const res = await fetch('/api/stats');
+        const res = await fetch(`/api/stats?_t=${Date.now()}`);
         const data = await res.json();
         if (data.success) displayDetailedStats(data);
     } catch (e) { console.error(e); }
@@ -306,31 +310,55 @@ function displayDetailedStats(data) {
     set('avgPacketSize', data.avg_packet_size ? `${data.avg_packet_size} B` : '—');
     set('totalDataKb', data.total_data_kb ? `${data.total_data_kb} KB` : '—');
 
+    const total = data.total_packets || 1;
+    
+    // Helper to format percentage text
+    const getPctText = (count, total) => {
+        if (count === 0) return '0';
+        const pct = (count / total) * 100;
+        if (pct > 0 && Math.round(pct) === 0) return '<1';
+        return Math.round(pct);
+    };
+
     // Protocols
     const protocolList = document.getElementById('protocolList');
     if (protocolList && data.protocols) {
-        const total = Object.values(data.protocols).reduce((a, b) => a + b, 0) || 1;
         protocolList.innerHTML = Object.entries(data.protocols).map(([name, count]) => {
-            const pct = Math.round((count / total) * 100);
-            return `<div class="stat-row"><span class="stat-name">${name}</span><span class="stat-count">${count} (${pct}%)</span></div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${pct}%"></div></div>`;
+            const pctVal = (count / total) * 100;
+            const pctText = getPctText(count, total);
+            return `<div class="stat-row"><span class="stat-name">${name}</span><span class="stat-count">${count} (${pctText}%)</span></div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${pctVal}%"></div></div>`;
         }).join('');
     }
 
     // Sources
     const sourcesList = document.getElementById('sourcesList');
     if (sourcesList && data.top_sources) {
-        sourcesList.innerHTML = Object.entries(data.top_sources).map(([ip, count]) =>
-            `<div class="ip-item"><span class="ip-addr">${ip}</span><span class="ip-count">${count} packets</span></div>`
-        ).join('') || '<div class="empty-state"><p>No data</p></div>';
+        sourcesList.innerHTML = Object.entries(data.top_sources).map(([ip, count]) => {
+            const pctVal = (count / total) * 100;
+            const pctText = getPctText(count, total);
+            return `<div class="ip-item">
+                        <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
+                            <span class="ip-addr">${ip}</span>
+                            <span class="ip-count">${count} (${pctText}%)</span>
+                        </div>
+                        <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${pctVal}%"></div></div>
+                    </div>`;
+        }).join('') || '<div class="empty-state"><p>No data</p></div>';
     }
 
     // Ports
     const portsList = document.getElementById('portsList');
     if (portsList && data.top_ports) {
-        const maxPort = Math.max(...Object.values(data.top_ports)) || 1;
         portsList.innerHTML = Object.entries(data.top_ports).map(([name, count]) => {
-            const pct = Math.round((count / maxPort) * 100);
-            return `<div class="port-item"><div class="port-info"><span class="port-name">${name}</span><span class="port-count">${count}</span></div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${pct}%"></div></div></div>`;
+            const pctVal = (count / total) * 100;
+            const pctText = getPctText(count, total);
+            return `<div class="port-item">
+                        <div class="port-info" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
+                            <span class="port-name">${name}</span>
+                            <span class="port-count">${count} (${pctText}%)</span>
+                        </div>
+                        <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${pctVal}%"></div></div>
+                    </div>`;
         }).join('');
     }
 }
@@ -409,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchLogs();
 
         // Check if monitoring is already active (page reload)
-        fetch('/api/status')
+        fetch(`/api/status?_t=${Date.now()}`)
             .then(r => r.json())
             .then(data => {
                 if (data.monitoring) {
