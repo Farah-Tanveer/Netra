@@ -2,7 +2,9 @@
 
 Netra is a premium, real-time network traffic monitoring and analysis platform. Designed for security professionals and network administrators, it provides sub-millisecond visibility into every packet flowing through your infrastructure with a stunning cyber-themed interface.
 
-![Netra Dashboard Preview](https://raw.githubusercontent.com/Farah-Tanveer/Netra/main/static/images/landing_bg.jpg) *(Note: Replace with actual screenshot)*
+![Netra Landing Page Preview](https://raw.githubusercontent.com/Farah-Tanveer/Netra/main/static/images/Screenshot1.png) *(Note: Replace with actual screenshot)*
+
+![Netra Dashboard Preview](https://raw.githubusercontent.com/Farah-Tanveer/Netra/main/static/images/Screenshot2.png) *(Note: Replace with actual screenshot)*
 
 ## ✨ Key Features
 

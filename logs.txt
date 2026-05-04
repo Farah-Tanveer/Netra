@@ -26,3 +26,5 @@
 2026-05-02 10:36:12 - [SNIFFER] Real-time packet capture started
 2026-05-02 10:36:13 - [STOP] Monitoring ended | Packets: 8 | Data: 0.5 KB
 2026-05-02 10:36:13 - [STOP] Monitoring session ended | Packets Captured: 8
+2026-05-04 20:13:39 - [INIT] Netra Application Started
+2026-05-04 20:13:40 - [INIT] Netra Application Started
