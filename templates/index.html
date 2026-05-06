@@ -26,6 +26,7 @@
                 <li class="nav-item"><a href="/dashboard" class="nav-link">Dashboard</a></li>
                 <li class="nav-item"><a href="#about" class="nav-link">About</a></li>
                 <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
+                <li class="nav-item" id="navAuthItem"><a href="#" class="nav-link" id="navAuthLink">Login</a></li>
                 <li class="nav-item">
                     <button class="theme-toggle" id="themeToggle" title="Toggle Theme (Ctrl+K)">
                         <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -167,6 +168,41 @@
             <p>&copy; 2026 Netra — Network Intelligence Platform. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Login/Register Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-card glass-card">
+            <button class="modal-close" id="closeLogin">&times;</button>
+            <h2 class="section-title" id="modalTitle" style="font-size: 1.5rem; margin-bottom: 8px;">Admin <span class="gradient-text">Login</span></h2>
+            <p id="modalDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Enter your credentials to manage network monitoring.</p>
+            <form id="authForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="authUsername" class="form-control" placeholder="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="authPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="authSubmitBtn" class="btn btn-primary btn-block">Login to Netra</button>
+            </form>
+            <div style="margin-top: 16px; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+                <span id="toggleText">Don't have an account?</span> 
+                <a href="#" id="toggleAuthMode" style="color: var(--primary); font-weight: 600; text-decoration: none;">Register Now</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- DoS Block Screen -->
+    <div class="dos-block-screen" id="dosBlockScreen">
+        <div class="dos-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h2 class="dos-title">ACCESS DENIED</h2>
+        <p class="dos-text">Our security systems have detected an unusual volume of requests from your IP address. For protection, your access has been temporarily restricted.</p>
+        <div class="countdown-wrap" id="dosCountdown">05:00</div>
+        <p style="margin-top: 24px; font-size: 0.8rem; color: var(--text-muted);">Wait for the timer or contact support if this is a mistake.</p>
+    </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

@@ -25,6 +25,7 @@
                 <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
                 <li class="nav-item"><a href="/dashboard" class="nav-link active">Dashboard</a></li>
                 <li class="nav-item"><a href="/stats" class="nav-link">Stats</a></li>
+                <li class="nav-item" id="navAuthItem"><a href="#" class="nav-link" id="navAuthLink">Login</a></li>
                 <li class="nav-item">
                     <button class="theme-toggle" id="themeToggle" title="Toggle Theme (Ctrl+K)">
                         <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -60,6 +61,10 @@
                     <button class="btn btn-danger" id="stopBtn" disabled>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>
                         Stop
+                    </button>
+                    <button class="btn btn-outline" id="resetSessionBtn" title="Reset all monitoring data">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        Reset
                     </button>
                 </div>
             </div>
@@ -174,6 +179,17 @@
             <p>&copy; 2026 Netra — Network Intelligence Platform. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Security Alert Banner -->
+    <div class="security-alert-banner" id="securityAlert">
+        <div class="alert-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="alert-content">
+            <div class="alert-title">DoS Attack Detected</div>
+            <div class="alert-msg">Unusual traffic patterns detected from multiple sources. Defensive measures active.</div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
