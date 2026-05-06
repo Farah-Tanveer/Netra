@@ -39,19 +39,32 @@ async function authFetch(url, options = {}) {
         if (response.status === 429) {
             const data = await response.json();
             handleDoS(data.blocked_until);
-            return { success: false, error: 'DoS Blocked' };
+            // Return a fake response object that has a .json() method
+            return {
+                ok: false,
+                status: 429,
+                json: async () => data
+            };
         }
 
         // Handle Unauthorized (401)
         if (response.status === 401 && !url.includes('/login')) {
             showLoginModal();
-            return { success: false, error: 'Unauthorized' };
+            return {
+                ok: false,
+                status: 401,
+                json: async () => ({ success: false, error: 'Unauthorized' })
+            };
         }
 
         return response;
     } catch (error) {
         console.error('Fetch error:', error);
-        return { success: false, error: error.message };
+        return {
+            ok: false,
+            status: 500,
+            json: async () => ({ success: false, error: error.message })
+        };
     }
 }
 
@@ -675,25 +688,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.body.classList.contains('page-dashboard')) {
         // Init UI for either Guest or Admin
         updateDashboardUI();
-        fetchTrafficData();
-        fetchLogs();
         
-        // Update status and potentially start auto-update if sniffer is running
-        authFetch(`/api/status?_t=${Date.now()}`)
-            .then(r => r.json())
-            .then(data => {
-                if (data.monitoring) {
-                    isMonitoring = true;
-                    packetCount = data.packet_count || 0;
-                    updateDashboardUI(data.simulation);
-                    startAutoUpdate();
-                }
-            })
-            .catch(() => {});
-
-        // If not logged in, show a subtle hint
+        // If not logged in, prompt for login immediately
         if (!localStorage.getItem('netra-token')) {
-            showNotification('Entering Guest Mode (Read-Only). Login as Admin to start capture.', 'info');
+            showNotification('Authentication Required. Please login to access the dashboard.', 'info');
+            setTimeout(() => showLoginModal(), 500);
+        } else {
+            fetchTrafficData();
+            fetchLogs();
+            
+            // Update status and potentially start auto-update if sniffer is running
+            authFetch(`/api/status?_t=${Date.now()}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.monitoring) {
+                        isMonitoring = true;
+                        packetCount = data.packet_count || 0;
+                        updateDashboardUI(data.simulation);
+                        startAutoUpdate();
+                    }
+                })
+                .catch(() => {});
         }
     }
     if (document.body.classList.contains('page-stats')) {
