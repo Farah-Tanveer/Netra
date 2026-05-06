@@ -1,8 +1,9 @@
-// ===== NETRA — Main Script =====
+// ===== NETRA — Main Script (Security Enhanced) =====
 
 let isMonitoring = false;
 let packetCount = 0;
 let updateInterval = null;
+let dosBlockActive = false;
 
 // ===== THEME =====
 function initTheme() {
@@ -21,6 +22,206 @@ function toggleTheme() {
     const isLight = document.body.classList.contains('light-theme');
     applyTheme(isLight ? 'dark' : 'light');
 }
+
+// ===== SECURITY UTILS =====
+async function authFetch(url, options = {}) {
+    const token = localStorage.getItem('netra-token');
+    const headers = {
+        ...options.headers,
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json'
+    };
+
+    try {
+        const response = await fetch(url, { ...options, headers });
+        
+        // Handle DoS Detection (429)
+        if (response.status === 429) {
+            const data = await response.json();
+            handleDoS(data.blocked_until);
+            return { success: false, error: 'DoS Blocked' };
+        }
+
+        // Handle Unauthorized (401)
+        if (response.status === 401 && !url.includes('/login')) {
+            showLoginModal();
+            return { success: false, error: 'Unauthorized' };
+        }
+
+        return response;
+    } catch (error) {
+        console.error('Fetch error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+function handleDoS(seconds) {
+    if (dosBlockActive) return;
+    dosBlockActive = true;
+    
+    const screen = document.getElementById('dosBlockScreen');
+    const countdown = document.getElementById('dosCountdown');
+    const alert = document.getElementById('securityAlert');
+    
+    if (screen) screen.classList.add('active');
+    if (alert) alert.classList.add('active');
+    
+    let remaining = seconds || 300;
+    const timer = setInterval(() => {
+        remaining--;
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        if (countdown) countdown.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        if (remaining <= 0) {
+            clearInterval(timer);
+            dosBlockActive = false;
+            if (screen) screen.classList.remove('active');
+            if (alert) alert.classList.remove('active');
+            window.location.reload();
+        }
+    }, 1000);
+}
+
+function showLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) modal.classList.add('active');
+}
+
+function hideLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function updateAuthUI() {
+    const authLink = document.getElementById('navAuthLink');
+    if (!authLink) return;
+    
+    if (localStorage.getItem('netra-token')) {
+        authLink.textContent = 'Logout';
+        authLink.classList.add('auth-logged-in');
+    } else {
+        authLink.textContent = 'Login';
+        authLink.classList.remove('auth-logged-in');
+    }
+}
+
+function handleLogout() {
+    localStorage.removeItem('netra-token');
+    showNotification('Logged out successfully', 'info');
+    updateAuthUI();
+    // Redirect to home if on a protected-ish page or just refresh
+    if (document.body.classList.contains('page-dashboard') || document.body.classList.contains('page-stats')) {
+        window.location.reload();
+    }
+}
+
+let authMode = 'login'; // 'login' or 'register'
+
+function toggleAuth() {
+    const title = document.getElementById('modalTitle');
+    const desc = document.getElementById('modalDesc');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const toggleLink = document.getElementById('toggleAuthMode');
+    const toggleText = document.getElementById('toggleText');
+    
+    if (authMode === 'login') {
+        authMode = 'register';
+        title.innerHTML = 'Create <span class="gradient-text">Account</span>';
+        desc.textContent = 'Sign up to access and manage network monitoring.';
+        submitBtn.textContent = 'Register Account';
+        toggleLink.textContent = 'Login here';
+        toggleText.textContent = 'Already have an account?';
+    } else {
+        authMode = 'login';
+        title.innerHTML = 'Admin <span class="gradient-text">Login</span>';
+        desc.textContent = 'Enter your credentials to manage network monitoring.';
+        submitBtn.textContent = 'Login to Netra';
+        toggleLink.textContent = 'Register Now';
+        toggleText.textContent = "Don't have an account?";
+    }
+}
+
+function initSecurity() {
+    const authForm = document.getElementById('authForm');
+    const closeBtn = document.getElementById('closeLogin');
+    const navAuthLink = document.getElementById('navAuthLink');
+    const toggleLink = document.getElementById('toggleAuthMode');
+    
+    updateAuthUI();
+
+    if (toggleLink) {
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleAuth();
+        });
+    }
+
+    if (navAuthLink) {
+        navAuthLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (localStorage.getItem('netra-token')) {
+                handleLogout();
+            } else {
+                showLoginModal();
+            }
+        });
+    }
+
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('authUsername').value;
+            const password = document.getElementById('authPassword').value;
+            
+            const endpoint = authMode === 'login' ? '/login' : '/register';
+            
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    if (authMode === 'register') {
+                        showNotification('Registration successful! Please login.', 'success');
+                        toggleAuth(); // Switch to login mode
+                    } else {
+                        localStorage.setItem('netra-token', data.token);
+                        showNotification('Authentication successful!', 'success');
+                        hideLoginModal();
+                        updateAuthUI();
+                        if (document.body.classList.contains('page-dashboard') || document.body.classList.contains('page-stats')) {
+                            window.location.reload();
+                        }
+                    }
+                } else {
+                    showNotification(data.message || 'Error occurred', 'error');
+                }
+            } catch (err) {
+                showNotification('Authentication failed', 'error');
+            }
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideLoginModal);
+    }
+
+    // Intercept "Start Capture" if not logged in
+    const startCaptureBtn = document.getElementById('startCaptureBtn');
+    if (startCaptureBtn) {
+        startCaptureBtn.addEventListener('click', (e) => {
+            if (!localStorage.getItem('netra-token')) {
+                e.preventDefault();
+                showLoginModal();
+            }
+        });
+    }
+}
+
 
 // ===== NAVBAR SCROLL EFFECT =====
 function initNavbar() {
@@ -94,17 +295,17 @@ function initScrollAnimations() {
 // ===== API CALLS =====
 async function startMonitoring() {
     try {
-        const res = await fetch('/api/start-monitoring', { method: 'POST' });
+        const res = await authFetch('/api/start-monitoring', { method: 'POST' });
+        if (!res.ok) return;
         const data = await res.json();
         if (data.success) {
             isMonitoring = true;
             packetCount = 0;
-            // Clear UI immediately so previous data doesn't linger
             displayTraffic([], true);
             updateMiniStats({total: 0, tcp: 0, udp: 0, icmp: 0, avg_size: 0, total_data: 0});
             updateDashboardUI();
             startAutoUpdate();
-            fetchLivePackets(); // Fetch immediately
+            fetchLivePackets();
             showNotification('Real-time packet capture started!', 'success');
         } else {
             showNotification(data.message || 'Failed to start', 'error');
@@ -117,7 +318,8 @@ async function startMonitoring() {
 
 async function stopMonitoring() {
     try {
-        const res = await fetch('/api/stop-monitoring', { method: 'POST' });
+        const res = await authFetch('/api/stop-monitoring', { method: 'POST' });
+        if (!res.ok) return;
         const data = await res.json();
         if (data.success) {
             isMonitoring = false;
@@ -127,7 +329,6 @@ async function stopMonitoring() {
                 `Monitoring stopped — ${data.packets_captured || 0} packets captured`,
                 'success'
             );
-            // Fetch final data from CSV
             fetchTrafficData();
             fetchLogs();
         }
@@ -145,7 +346,8 @@ async function fetchLivePackets() {
         const params = new URLSearchParams({
             protocol, src_ip: srcIp, dest_ip: destIp, limit: 50, _t: Date.now()
         });
-        const res = await fetch(`/api/live-packets?${params}`);
+        const res = await authFetch(`/api/live-packets?${params}`);
+        if (!res.ok) return;
         const data = await res.json();
         if (data.success) {
             displayTraffic(data.data, true);
@@ -162,7 +364,8 @@ async function fetchTrafficData() {
         const srcIp = document.getElementById('srcIpFilter')?.value || '';
         const destIp = document.getElementById('destIpFilter')?.value || '';
         const params = new URLSearchParams({ protocol, src_ip: srcIp, dest_ip: destIp, limit: 50, _t: Date.now() });
-        const res = await fetch(`/api/traffic-data?${params}`);
+        const res = await authFetch(`/api/traffic-data?${params}`);
+        if (!res.ok) return;
         const data = await res.json();
         if (data.success) {
             displayTraffic(data.data, false);
@@ -175,7 +378,8 @@ async function fetchTrafficData() {
 
 async function fetchLogs() {
     try {
-        const res = await fetch(`/api/logs?limit=30&_t=${Date.now()}`);
+        const res = await authFetch(`/api/logs?limit=30&_t=${Date.now()}`);
+        if (!res.ok) return;
         const data = await res.json();
         if (data.success) {
             displayLogs(data.logs);
@@ -185,7 +389,8 @@ async function fetchLogs() {
 
 async function fetchDetailedStats() {
     try {
-        const res = await fetch(`/api/stats?_t=${Date.now()}`);
+        const res = await authFetch(`/api/stats?_t=${Date.now()}`);
+        if (!res.ok) return;
         const data = await res.json();
         if (data.success) displayDetailedStats(data);
     } catch (e) { console.error(e); }
@@ -199,7 +404,6 @@ function resetFilters() {
     if (protocolFilter) protocolFilter.value = 'ALL';
     if (srcIpFilter) srcIpFilter.value = '';
     if (destIpFilter) destIpFilter.value = '';
-    // Re-fetch data with cleared filters
     if (isMonitoring) {
         fetchLivePackets();
     } else {
@@ -211,7 +415,12 @@ function resetFilters() {
 // ===== EXPORT CSV =====
 async function exportCsv() {
     try {
-        window.location.href = '/api/export-csv';
+        const token = localStorage.getItem('netra-token');
+        if (!token) {
+            showLoginModal();
+            return;
+        }
+        window.location.href = `/api/export-csv?token=${token}`;
         showNotification('Exporting CSV...', 'success');
     } catch (e) {
         showNotification('Error exporting CSV', 'error');
@@ -271,7 +480,6 @@ function displayTraffic(packets, isLive) {
     });
     html += '</tbody></table></div>';
     list.innerHTML = html;
-    // Auto-scroll to bottom for live data
     if (isLive) {
         list.scrollTop = list.scrollHeight;
     }
@@ -285,16 +493,15 @@ function displayLogs(logs) {
         return;
     }
     let html = '';
-    // Show newest first
     const reversed = [...logs].reverse();
     reversed.forEach(log => {
-        // Parse log type for styling
         let logClass = 'log-info';
         if (log.includes('[START]')) logClass = 'log-start';
         else if (log.includes('[STOP]')) logClass = 'log-stop';
         else if (log.includes('[INIT]')) logClass = 'log-init';
         else if (log.includes('[SNIFFER]')) logClass = 'log-sniffer';
         else if (log.includes('[ERROR]')) logClass = 'log-error';
+        else if (log.includes('[SECURITY]')) logClass = 'log-error';
 
         html += `<div class="log-entry ${logClass}">${log}</div>`;
     });
@@ -302,7 +509,6 @@ function displayLogs(logs) {
 }
 
 function displayDetailedStats(data) {
-    // Summary
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
     set('totalPackets', data.total_packets);
     set('uniqueSources', data.unique_sources);
@@ -312,7 +518,6 @@ function displayDetailedStats(data) {
 
     const total = data.total_packets || 1;
     
-    // Helper to format percentage text
     const getPctText = (count, total) => {
         if (count === 0) return '0';
         const pct = (count / total) * 100;
@@ -320,7 +525,6 @@ function displayDetailedStats(data) {
         return Math.round(pct);
     };
 
-    // Protocols
     const protocolList = document.getElementById('protocolList');
     if (protocolList && data.protocols) {
         protocolList.innerHTML = Object.entries(data.protocols).map(([name, count]) => {
@@ -330,7 +534,16 @@ function displayDetailedStats(data) {
         }).join('');
     }
 
-    // Sources
+    // Packet Size Distribution
+    const sizeDistList = document.getElementById('sizeDistList');
+    if (sizeDistList && data.size_dist) {
+        sizeDistList.innerHTML = Object.entries(data.size_dist).map(([name, count]) => {
+            const pctVal = (count / total) * 100;
+            const pctText = getPctText(count, total);
+            return `<div class="stat-row"><span class="stat-name">${name}</span><span class="stat-count">${count} (${pctText}%)</span></div><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:${pctVal}%"></div></div>`;
+        }).join('');
+    }
+
     const sourcesList = document.getElementById('sourcesList');
     if (sourcesList && data.top_sources) {
         sourcesList.innerHTML = Object.entries(data.top_sources).map(([ip, count]) => {
@@ -346,7 +559,6 @@ function displayDetailedStats(data) {
         }).join('') || '<div class="empty-state"><p>No data</p></div>';
     }
 
-    // Ports
     const portsList = document.getElementById('portsList');
     if (portsList && data.top_ports) {
         portsList.innerHTML = Object.entries(data.top_ports).map(([name, count]) => {
@@ -366,9 +578,8 @@ function displayDetailedStats(data) {
 // ===== AUTO UPDATE =====
 function startAutoUpdate() {
     if (updateInterval) clearInterval(updateInterval);
-    // Fetch live packets every 1.5 seconds during monitoring
     updateInterval = setInterval(() => {
-        if (isMonitoring) {
+        if (isMonitoring && !dosBlockActive) {
             fetchLivePackets();
         }
     }, 1500);
@@ -407,11 +618,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initParticles();
     initScrollAnimations();
     initContactForm();
+    initSecurity();
 
-    // Theme toggle
     document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
 
-    // Dashboard buttons
     document.getElementById('startBtn')?.addEventListener('click', startMonitoring);
     document.getElementById('stopBtn')?.addEventListener('click', stopMonitoring);
     document.getElementById('applyFiltersBtn')?.addEventListener('click', () => {
@@ -422,7 +632,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportCsvBtn')?.addEventListener('click', exportCsv);
     document.getElementById('refreshLogsBtn')?.addEventListener('click', fetchLogs);
 
-    // Keyboard shortcuts
+    document.getElementById('resetSessionBtn')?.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to clear all monitoring data and logs? This cannot be undone.')) return;
+        
+        try {
+            const res = await authFetch('/api/reset-session', { method: 'POST' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.success) {
+                showNotification('Session data cleared!', 'success');
+                window.location.reload();
+            }
+        } catch (e) {
+            showNotification('Error resetting session', 'error');
+        }
+    });
+
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 'k') {
             e.preventDefault();
@@ -430,14 +655,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Page-specific init
     if (document.body.classList.contains('page-dashboard')) {
+        // Init UI for either Guest or Admin
         updateDashboardUI();
         fetchTrafficData();
         fetchLogs();
-
-        // Check if monitoring is already active (page reload)
-        fetch(`/api/status?_t=${Date.now()}`)
+        
+        // Update status and potentially start auto-update if sniffer is running
+        authFetch(`/api/status?_t=${Date.now()}`)
             .then(r => r.json())
             .then(data => {
                 if (data.monitoring) {
@@ -448,6 +673,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
             .catch(() => {});
+
+        // If not logged in, show a subtle hint
+        if (!localStorage.getItem('netra-token')) {
+            showNotification('Entering Guest Mode (Read-Only). Login as Admin to start capture.', 'info');
+        }
     }
     if (document.body.classList.contains('page-stats')) {
         fetchDetailedStats();
