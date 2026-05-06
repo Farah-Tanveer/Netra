@@ -25,6 +25,13 @@ Netra is a premium, real-time network traffic monitoring and analysis platform. 
 - **Data Persistence**: CSV (Traffic Data), JSON (Session Stats), TXT (System Logs)
 - **Monitoring**: Multi-threaded Background Sniffer
 
+### 🛡️ Security Features (New)
+- **User Registration**: Users can now create unique accounts for secure access management.
+- **JWT Authentication**: Secure session management using industry-standard JSON Web Tokens.
+- **DoS Protection**: Real-time rate limiting and IP blocking to prevent Denial of Service attacks.
+- **Password Hashing**: Passwords are securely hashed using PBKDF2 with SHA-256 (First-Principles).
+- **Security Headers**: Hardened with CSP, HSTS, XSS Protection, and No-Sniff headers.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -92,6 +99,31 @@ A detailed 16-section project report (`report.pdf`) is available in the root dir
 **Farah Tanveer**
 - GitHub: [@Farah-Tanveer](https://github.com/Farah-Tanveer)
 
-## ⚖️ License
+## 📂 Project Structure
+- `app.py`: Main Flask application server.
+- `static/`: Frontend assets (CSS, JS, Images).
+- `templates/`: HTML templates for Dashboard and Stats.
+- `requirements.txt`: Python dependencies.
+- `Procfile`: Deployment configuration for Gunicorn.
+- `BCSF24M016_report.pdf`: Updated project documentation.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 🚀 Deployment Guide (Render)
+1. **Prepare Repository**: Ensure all files are committed to your GitHub repository.
+2. **Create New Web Service**: On Render, click "New" -> "Web Service".
+3. **Connect Repository**: Select your Netra repository.
+4. **Configure Settings**:
+   - **Environment**: `Python`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app`
+5. **Environment Variables**: Add the following in the Render Dashboard:
+   - `SECRET_KEY`: (Your secret key)
+   - `ADMIN_PASSWORD`: (Your desired default admin password)
+6. **Deploy**: Click "Create Web Service". Render will automatically build and launch Netra.
+
+## 🛡️ Security Configuration
+- **HTTPS**: Render provides automatic SSL.
+- **Secrets**: Use environment variables for sensitive data.
+- **Persistence**: Note that Render's free tier has an ephemeral file system. Captures and logs will reset on every redeploy. For persistent storage, consider attaching a Render Disk or using an external database.
+
+## 📝 License
+This project is licensed under the MIT License - see the LICENSE file for details.
