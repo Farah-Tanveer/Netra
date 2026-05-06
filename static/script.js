@@ -353,7 +353,7 @@ async function fetchLivePackets() {
             displayTraffic(data.data, true);
             updateMiniStats(data.stats);
             packetCount = data.stats.total;
-            updateDashboardUI();
+            updateDashboardUI(data.stats.simulation_mode);
         }
     } catch (e) { console.error(e); }
 }
@@ -428,7 +428,7 @@ async function exportCsv() {
 }
 
 // ===== UI UPDATES =====
-function updateDashboardUI() {
+function updateDashboardUI(isSimulation = false) {
     const dot = document.getElementById('statusDot');
     const text = document.getElementById('statusText');
     const countEl = document.getElementById('packetCount');
@@ -436,12 +436,29 @@ function updateDashboardUI() {
     const stopBtn = document.getElementById('stopBtn');
     const liveBadge = document.getElementById('liveBadge');
 
-    if (dot) dot.className = isMonitoring ? 'status-dot active' : 'status-dot';
-    if (text) text.textContent = isMonitoring ? 'Capturing Live Packets' : 'Ready';
+    if (dot) {
+        dot.className = isMonitoring ? 'status-dot active' : 'status-dot';
+        if (isMonitoring && isSimulation) dot.classList.add('simulating');
+    }
+    
+    if (text) {
+        if (isMonitoring) {
+            text.textContent = isSimulation ? 'Simulation Mode Active' : 'Capturing Live Packets';
+        } else {
+            text.textContent = 'Ready';
+        }
+    }
+
     if (countEl) countEl.textContent = packetCount;
     if (startBtn) startBtn.disabled = isMonitoring;
     if (stopBtn) stopBtn.disabled = !isMonitoring;
-    if (liveBadge) liveBadge.style.display = isMonitoring ? 'inline-flex' : 'none';
+    
+    if (liveBadge) {
+        liveBadge.style.display = isMonitoring ? 'inline-flex' : 'none';
+        liveBadge.textContent = isSimulation ? 'SIMULATED' : 'LIVE';
+        if (isSimulation) liveBadge.classList.add('badge-sim');
+        else liveBadge.classList.remove('badge-sim');
+    }
 }
 
 function updateMiniStats(stats) {
@@ -668,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.monitoring) {
                     isMonitoring = true;
                     packetCount = data.packet_count || 0;
-                    updateDashboardUI();
+                    updateDashboardUI(data.simulation);
                     startAutoUpdate();
                 }
             })

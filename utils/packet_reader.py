@@ -34,6 +34,7 @@ class PacketSniffer:
         self.sniffer_thread = None
         self.packet_count = 0
         self.total_bytes = 0
+        self.simulation_mode = False
         self.lock = threading.Lock()
 
         # In-memory ring buffer for recent packets (for live streaming)
@@ -142,26 +143,87 @@ class PacketSniffer:
         except Exception:
             pass
 
+    def _generate_mock_packet(self):
+        """Generate a random packet for simulation/demo purposes."""
+        import random
+        protocols = ["TCP", "UDP", "ICMP"]
+        common_ips = ["192.168.1.1", "10.0.0.5", "172.16.0.2", "8.8.8.8", "1.1.1.1"]
+        
+        protocol = random.choice(protocols)
+        src_ip = random.choice(common_ips)
+        dst_ip = random.choice([ip for ip in common_ips if ip != src_ip])
+        size = random.randint(40, 1500)
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        
+        src_port = random.randint(1024, 65535)
+        dst_port = random.choice([80, 443, 53, 22, 3306, 8080])
+        
+        if protocol == "ICMP":
+            src_port = 0
+            dst_port = 0
+            
+        service = PORT_SERVICE_MAP.get(dst_port, "Unknown")
+        
+        record = {
+            "Time": timestamp,
+            "Source_IP": src_ip,
+            "Destination_IP": dst_ip,
+            "Protocol": protocol,
+            "Packet_Size": size,
+            "Source_Port": src_port,
+            "Destination_Port": dst_port,
+            "Service": service,
+            "Is_Mock": True
+        }
+        
+        with self.lock:
+            self.packet_count += 1
+            self.total_bytes += size
+            if protocol in self.protocol_counts:
+                self.protocol_counts[protocol] += 1
+            self.packet_buffer.append(record)
+            
+            # Write to CSV
+            try:
+                with open(self.csv_file, "a", newline="", encoding="utf-8") as f:
+                    writer = csv.writer(f)
+                    writer.writerow([timestamp, src_ip, dst_ip, protocol, size, src_port, dst_port])
+            except: pass
+
+    def _simulation_loop(self):
+        """Generate mock traffic periodically."""
+        import time
+        import random
+        self.simulation_mode = True
+        self._write_log("[SIMULATION] Simulation mode active (No raw socket access)")
+        while self.is_running:
+            self._generate_mock_packet()
+            # Random delay between packets (0.1s to 1s)
+            time.sleep(random.uniform(0.1, 1.0))
+        self.simulation_mode = False
+
     def _sniff_loop(self):
-        """Run the Scapy sniffer — this blocks until stopped."""
+        """Run the Scapy sniffer or fallback to simulation."""
         try:
-            self._write_log("[SNIFFER] Real-time packet capture started")
-            # Use store=0 for memory efficiency; stop_filter checks our flag
+            self.simulation_mode = False
+            self._write_log("[SNIFFER] Attempting real-time packet capture")
+            # This will fail on Render/Heroku due to permissions
             sniff(
                 prn=self._process_packet,
                 store=0,
                 stop_filter=lambda _: not self.is_running,
-                # Capture only IP traffic to reduce noise
                 filter="ip",
-                # Timeout every 1s to check if we should stop
-                timeout=1
+                timeout=2
             )
         except Exception as e:
-            self._write_log(f"[SNIFFER ERROR] {e}")
+            self._write_log(f"[SNIFFER FALLBACK] Real sniffing failed: {e}")
+            self._simulation_loop()
 
-        # If we're still supposed to be running, restart (timeout triggered)
-        if self.is_running:
-            self._sniff_loop()
+        # Restart loop if still running (timeout or error occurred)
+        if self.is_running and SCAPY_AVAILABLE:
+            # Check if we should continue simulation or retry sniffing
+            # If we reached here, real sniffing either timed out or failed.
+            pass 
 
     def start(self):
         """Start capturing packets in a background thread."""
@@ -224,5 +286,6 @@ class PacketSniffer:
                 "icmp": self.protocol_counts.get("ICMP", 0),
                 "avg_size": avg_size,
                 "total_data": round(self.total_bytes / 1024, 2),
-                "is_running": self.is_running
+                "is_running": self.is_running,
+                "simulation_mode": self.simulation_mode
             }

@@ -239,6 +239,7 @@ def get_status():
     saved_stats = load_stats()
     return jsonify({
         "monitoring": sniffer.is_running,
+        "simulation": live_stats.get("simulation_mode", False),
         "packet_count": live_stats["total"],
         "total_sessions": saved_stats.get("sessions", 0),
         "live_stats": live_stats
