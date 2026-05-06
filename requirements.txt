@@ -1,7 +1,7 @@
-Flask==3.0.0
-flask-cors==4.0.0
-scapy==2.5.0
-pandas==2.1.3
-fpdf2==2.7.5
-gunicorn==21.2.0
-python-dotenv==1.0.0
+Flask
+flask-cors
+scapy
+pandas
+fpdf2
+gunicorn
+python-dotenv

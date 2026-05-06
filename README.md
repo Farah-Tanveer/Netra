@@ -113,7 +113,7 @@ A detailed 16-section project report (`report.pdf`) is available in the root dir
 3. **Connect Repository**: Select your Netra repository.
 4. **Configure Settings**:
    - **Environment**: `Python`
-   - **Build Command**: `pip install -r requirements.txt`
+   - **Build Command**: `pip install --upgrade pip setuptools wheel && pip install -r requirements.txt`
    - **Start Command**: `gunicorn app:app`
 5. **Environment Variables**: Add the following in the Render Dashboard:
    - `SECRET_KEY`: (Your secret key)
