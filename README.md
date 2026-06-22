@@ -1,4 +1,4 @@
-# 👁️ Netra — Network Intelligence Platform
+#  Netra — Network Intelligence Platform
 
 Netra is a premium, real-time network traffic monitoring and analysis platform. Designed for security professionals and network administrators, it provides sub-millisecond visibility into every packet flowing through your infrastructure with a stunning cyber-themed interface.
 
@@ -10,31 +10,31 @@ Netra is a premium, real-time network traffic monitoring and analysis platform. 
 
 
 ## Live at: https://netra-mo9m.onrender.com/
-## ✨ Key Features
+##  Key Features
 
-- **🚀 Real-Time Packet Sniffing**: Capture live IP traffic (TCP, UDP, ICMP) with sub-millisecond precision using Scapy.
-- **📊 Advanced Analytics**: Detailed protocol distribution, top source/destination analysis, and port usage statistics.
-- **🔍 Smart Filtering**: Instantly filter traffic by Protocol, Source IP, or Destination IP to find exactly what you need.
-- **💾 Data Portability**: Export all captured traffic to standard CSV format for offline analysis in Excel or Pandas.
-- **🌙 Premium Cyber UI**: High-end glassmorphism design with persistent Dark/Light modes and smooth micro-animations.
-- **📝 System Logging**: Comprehensive timestamped logs of all monitoring activities and sniffer events.
-- **🛠️ Service Identification**: Automatic mapping of destination ports to well-known service names (HTTP, DNS, SSH, etc.).
+- ** Real-Time Packet Sniffing**: Capture live IP traffic (TCP, UDP, ICMP) with sub-millisecond precision using Scapy.
+- ** Advanced Analytics**: Detailed protocol distribution, top source/destination analysis, and port usage statistics.
+- ** Smart Filtering**: Instantly filter traffic by Protocol, Source IP, or Destination IP to find exactly what you need.
+- ** Data Portability**: Export all captured traffic to standard CSV format for offline analysis in Excel or Pandas.
+- ** Premium Cyber UI**: High-end glassmorphism design with persistent Dark/Light modes and smooth micro-animations.
+- ** System Logging**: Comprehensive timestamped logs of all monitoring activities and sniffer events.
+- ** Service Identification**: Automatic mapping of destination ports to well-known service names (HTTP, DNS, SSH, etc.).
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 - **Backend**: Python 3.13, Flask, Scapy, Pandas
 - **Frontend**: Vanilla JavaScript (ES6+), CSS3 (Glassmorphism), HTML5
 - **Data Persistence**: CSV (Traffic Data), JSON (Session Stats), TXT (System Logs)
 - **Monitoring**: Multi-threaded Background Sniffer
 
-### 🛡️ Security Features (New)
+###  Security Features (New)
 - **User Registration**: Users can now create unique accounts for secure access management.
 - **JWT Authentication**: Secure session management using industry-standard JSON Web Tokens.
 - **DoS Protection**: Real-time rate limiting and IP blocking to prevent Denial of Service attacks.
 - **Password Hashing**: Passwords are securely hashed using PBKDF2 with SHA-256 (First-Principles).
 - **Security Headers**: Hardened with CSP, HSTS, XSS Protection, and No-Sniff headers.
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -64,7 +64,7 @@ Netra is a premium, real-time network traffic monitoring and analysis platform. 
 4. **Open in browser:**
    Navigate to `http://127.0.0.1:5000`
 
-## 📁 Project Structure
+##  Project Structure
 
 ```text
 Netra/
@@ -86,22 +86,22 @@ Netra/
     └── stats.html      # Analytical Insights Page
 ```
 
-## 📄 Project Documentation
+##  Project Documentation
 
 A detailed 16-section project report (`report.pdf`) is available in the root directory, covering system architecture, implementation details, and security considerations. This is ideal for academic submissions or technical deep-dives.
 
-## 🎓 Course Information
+##  Course Information
 
 - **Course**: Computer Networks
 - **Instructor**: University of Karachi (UBIT)
 - **Project Date**: May 2026
 
-## 👤 Author
+##  Author
 
 **Farah Tanveer**
 - GitHub: [@Farah-Tanveer](https://github.com/Farah-Tanveer)
 
-## 📂 Project Structure
+##  Project Structure
 - `app.py`: Main Flask application server.
 - `static/`: Frontend assets (CSS, JS, Images).
 - `templates/`: HTML templates for Dashboard and Stats.
@@ -109,7 +109,7 @@ A detailed 16-section project report (`report.pdf`) is available in the root dir
 - `Procfile`: Deployment configuration for Gunicorn.
 - `BCSF24M016_report.pdf`: Updated project documentation.
 
-## 🚀 Deployment Guide (Render)
+##  Deployment Guide (Render)
 1. **Prepare Repository**: Ensure all files are committed to your GitHub repository.
 2. **Create New Web Service**: On Render, click "New" -> "Web Service".
 3. **Connect Repository**: Select your Netra repository.
@@ -122,10 +122,10 @@ A detailed 16-section project report (`report.pdf`) is available in the root dir
    - `ADMIN_PASSWORD`: (Your desired default admin password)
 6. **Deploy**: Click "Create Web Service". Render will automatically build and launch Netra.
 
-## 🛡️ Security Configuration
+##  Security Configuration
 - **HTTPS**: Render provides automatic SSL.
 - **Secrets**: Use environment variables for sensitive data.
 - **Persistence**: Note that Render's free tier has an ephemeral file system. Captures and logs will reset on every redeploy. For persistent storage, consider attaching a Render Disk or using an external database.
 
-## 📝 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+##  License
+This project is licensed under the MIT License. See the LICENSE file for details.
